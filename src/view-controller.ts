@@ -1,4 +1,4 @@
-
+import * as $ from 'jquery';
 import { Event } from './services/event';
 
 
@@ -9,27 +9,27 @@ import { TreeController } from './tree-controller';
 export class ViewController {
 
 	openDownloaderBtn: JQuery<HTMLButtonElement>;
-	dialog: JQuery<HTMLElement>;
-	zipNameTextbox: JQuery<HTMLInputElement>;
+	dialog           : JQuery<HTMLElement>;
+	zipNameTextbox   : JQuery<HTMLInputElement>;
 	
-    selectAllBtn: JQuery<HTMLButtonElement>;
-    deselectAllBtn: JQuery<HTMLButtonElement>;
+    selectAllBtn      : JQuery<HTMLButtonElement>;
+    deselectAllBtn    : JQuery<HTMLButtonElement>;
     toggleSelectionBtn: JQuery<HTMLButtonElement>;
-    startBtn: JQuery<HTMLButtonElement>;
-	downloadBtn: JQuery<HTMLButtonElement>;
+    startBtn          : JQuery<HTMLButtonElement>;
+    downloadBtn       : JQuery<HTMLButtonElement>;
 	
 	//treeDiv: JQuery<HTMLElement>;
 	//tree: JSTree;
-	treeCtrl: TreeController;
+	//treeCtrl: TreeController;
 
 
 
-	onOpenDownloader = new Event<void>();
-	onSelectAll = new Event<void>();
-	onDeselectAll = new Event<void>();
+	onOpenDownloader  = new Event<void>();
+	onSelectAll       = new Event<void>();
+	onDeselectAll     = new Event<void>();
 	onToggleSelection = new Event<void>();
-	onStart = new Event<void>();
-	onDownload = new Event<void>();
+	onStart           = new Event<void>();
+	onDownload        = new Event<void>();
 	
 
 	// ---------------------------------------------------------------
@@ -132,7 +132,7 @@ export class ViewController {
 
 		//this.treeDiv = $('#BND-jstree-div');
 
-		this.treeCtrl = new TreeController("#BND-jstree-div");
+		//this.treeCtrl = new TreeController("#BND-jstree-div");
 	}
 
 	private setup() {

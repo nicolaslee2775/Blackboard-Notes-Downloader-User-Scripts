@@ -1,30 +1,31 @@
-import * as Bluebird from 'bluebird'
+import * as $ from 'jquery';
+import * as Bluebird from 'bluebird';
 
 import { Http } from './http';
 import { TreeController } from '../tree-controller';
 
 
 export interface FileContent {
-	id: number
-	type: string
-	name: string
-	url?: string
+	id             : number
+	type           : string
+	name           : string
+	url?           : string
 	attachmentName?: string
-	parent?: number
+	parent?        : number
 }
 
 export interface DownloadListItem {
-	id: number
+	id  : number
 	name: string
 	path: string
-	url: string
+	url : string
 }
 export interface DownloadFileItem {
-	id: number
+	id  : number
 	name: string
 	path: string
 	data: string
-	url: string
+	url : string
 }
 
 

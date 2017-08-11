@@ -20,7 +20,7 @@ declare var unsafeWindow;
 
 interface Model {
 	contentArray: FileContent[]
-	fileDict: {[id: number]: DownloadFileItem};
+	fileDict    : {[id: number]: DownloadFileItem};
 }
 
 
@@ -28,7 +28,7 @@ export class MainController {
 
 	model: Model = {
 		contentArray: [],
-		fileDict: {}
+		fileDict    : {}
 	}
 
 	state = {
@@ -41,10 +41,9 @@ export class MainController {
 
 	constructor() {
 		this.viewCtrl.onOpenDownloader.attach(() => this.openDownloader());
-
-		this.viewCtrl.onSelectAll.attach(() => this.viewCtrl.treeCtrl.selectAll());
-		this.viewCtrl.onDeselectAll.attach(() => this.viewCtrl.treeCtrl.deselectAll());
-		this.viewCtrl.onToggleSelection.attach(() => this.viewCtrl.treeCtrl.toggleSelection());
+		this.viewCtrl.onSelectAll.attach(() => this.treeCtrl.selectAll());
+		this.viewCtrl.onDeselectAll.attach(() => this.treeCtrl.deselectAll());
+		this.viewCtrl.onToggleSelection.attach(() => this.treeCtrl.toggleSelection());
 		this.viewCtrl.onStart.attach(() => this.start());
 		this.viewCtrl.onDownload.attach(() => this.download());
 	}
@@ -53,7 +52,8 @@ export class MainController {
 		// Load CSS
 		this.viewCtrl.initUi();
 
-		this.treeCtrl.tree.resize();
+		this.treeCtrl = new TreeController("#BND-jstree-div");
+		//this.treeCtrl.tree.resize();
 	}
 
 	openDownloader() {
@@ -65,92 +65,39 @@ export class MainController {
 		}
 	}
 
-	private fetchContentArray() {
-		var defaultZipName = $("#courseMenuPalette_paletteTitleHeading a.comboLink").text();
-		this.viewCtrl.zipNameTextbox.val(defaultZipName);
-
-		
-		var contentUrlArray: { url: string, name: string }[] = <any> $("#courseMenuPalette_contents>li>a[href^='/webapps/blackboard/content/listContent.jsp']").map((i, item) => ({ 
-			url: (<any> item).href, 
-			name: $(item).find("span").attr("title") 
-		}));
-		
-		console.log({ contentUrlArray: contentUrlArray });
-		
-		var counter = {
-			id: 0,
-			get: () => counter.id++,
-			set: (val) => counter.id = val
-		};
-		
-		
-		//counter.set(contentUrlArray.length);
-
-
-		var webScraping = new WebScraping();
-		
-		Bluebird.map(contentUrlArray, contentUrl => {
-
-				let parentContent = {
-					id: counter.get(),
-					parent: undefined,
-					type: "Folder",
-					name: contentUrl.name,
-					url: contentUrl.url
-				};
-			
-				return Http.downloadPage(contentUrl.url)
-					.then(html => webScraping.getFileArray(html, parentContent.id, counter))
-					//.tap(subContentArray => console.log("subContentArray:", subContentArray))
-					.then(subContentArray => subContentArray.concat([parentContent]))
-			})
-			.reduce<FileContent[], FileContent[]>((prev, next) => prev.concat(next)) // 2D -> 1D
-			.then(contentArray => contentArray.sort((a, b) => a.id - b.id))
-			.then(contentArray => {
-				console.log("contentArray:", contentArray);
-				unsafeWindow.contentArray = contentArray;
-				this.viewCtrl.treeCtrl.update(contentArray);
-				this.viewCtrl.treeCtrl.openAll();
-			});
-		
-
-
-		//this.viewCtrl.treeCtrl.update(this.viewCtrl.treeCtrl.getTestContentArray());
-		//this.viewCtrl.treeCtrl.openAll();
-	}
-
 	start() {
-		if(this.viewCtrl.treeCtrl.contentArray.length === 0) return;
+		let contentArray = this.treeCtrl.getContentArray();
+		if(contentArray.length === 0) return;
 
 		let webScraping = new WebScraping();
-		//let fileDict: { [id: number]: DownloadFileItem } = {};
 
-		webScraping.prepareDownloadList(this.viewCtrl.treeCtrl.contentArray, this.viewCtrl.treeCtrl)
-			.then(downloadList => this.viewCtrl.treeCtrl.removeDuplicate(downloadList, this.model.fileDict))
+		webScraping.prepareDownloadList(contentArray, this.treeCtrl)
+			.then(downloadList => this.removeDuplicate(downloadList, this.model.fileDict))
 			.tap(downloadList => 
 				downloadList.forEach(item => {
-					this.viewCtrl.treeCtrl.editData(item.id, "status", "Downloading...");
-					this.viewCtrl.treeCtrl.getRowDOM(item.id).attr("BND-status", "downloading");
+					this.treeCtrl.editData(item.id, "status", "Downloading...");
+					this.treeCtrl.getRowDOM(item.id).attr("BND-status", "downloading");
 				})
 			)
             .map<DownloadListItem, DownloadFileItem>(item => 
-				Http.downloadFile(item.url).then(result => ({
-					id: item.id,
-					name: item.name,
-					path: item.path,
-					data: result.response,
-					url: result.responseURL
-				}))
-                .tap(file => {
-					console.log("Downloaded!", {id: file.id, name: file.name, url: file.url});
+				Http.downloadFile(item.url)
+					.then(result => ({
+						id: item.id,
+						name: item.name,
+						path: item.path,
+						data: result.response,
+						url: result.responseURL
+					}))
+					.tap(file => {
+						console.log("Downloaded!", {id: file.id, name: file.name, url: file.url});
 
-					var index = file.url.lastIndexOf("/") + 1;
-					var fileName = decodeURIComponent(file.url.substring(index));
-					this.viewCtrl.treeCtrl.editData(file.id, "fileName", fileName);
+						var index = file.url.lastIndexOf("/") + 1;
+						var fileName = decodeURIComponent(file.url.substring(index));
+						this.treeCtrl.editData(file.id, "fileName", fileName);
 
-					this.viewCtrl.treeCtrl.editData(file.id, "status", "Done!");
-					this.viewCtrl.treeCtrl.getRowDOM(file.id).attr("BND-status", "done");
-				})
+						this.treeCtrl.editData(file.id, "status", "Done!");
+						this.treeCtrl.getRowDOM(file.id).attr("BND-status", "done");
+					})
 			)
 			.then(fileArray => {
 				fileArray.forEach(file => this.model.fileDict[file.id] = file);
@@ -165,7 +112,7 @@ export class MainController {
 		console.log("download");
 		var zip = new JSZip();
 
-		unsafeWindow.JSZip = JSZip;
+		//unsafeWindow.JSZip = JSZip;
 
 		for(var id in this.model.fileDict) {
 			let item = this.model.fileDict[id];
@@ -370,4 +317,67 @@ export class MainController {
 		
 	}
 	*/
+
+	private fetchContentArray() {
+		var defaultZipName = $("#courseMenuPalette_paletteTitleHeading a.comboLink").text();
+		this.viewCtrl.zipNameTextbox.val(defaultZipName);
+
+		
+		var contentUrlArray: { url: string, name: string }[] = <any> $("#courseMenuPalette_contents>li>a[href^='/webapps/blackboard/content/listContent.jsp']").map((i, item) => ({ 
+			url: (<any> item).href, 
+			name: $(item).find("span").attr("title") 
+		}));
+		
+		console.log({ contentUrlArray: contentUrlArray });
+		
+		var counter = {
+			id: 0,
+			get: () => counter.id++,
+			set: (val) => counter.id = val
+		};
+		
+		
+		//counter.set(contentUrlArray.length);
+
+
+		var webScraping = new WebScraping();
+		
+		Bluebird.map(contentUrlArray, contentUrl => {
+
+				let parentContent = {
+					id: counter.get(),
+					parent: undefined,
+					type: "Folder",
+					name: contentUrl.name,
+					url: contentUrl.url
+				};
+			
+				return Http.downloadPage(contentUrl.url)
+					.then(html => webScraping.getFileArray(html, parentContent.id, counter))
+					//.tap(subContentArray => console.log("subContentArray:", subContentArray))
+					.then(subContentArray => subContentArray.concat([parentContent]))
+			})
+			.reduce<FileContent[], FileContent[]>((prev, next) => prev.concat(next)) // 2D -> 1D
+			.then(contentArray => contentArray.sort((a, b) => a.id - b.id))
+			.then(contentArray => {
+				console.log("contentArray:", contentArray);
+				unsafeWindow.contentArray = contentArray;
+				this.treeCtrl.update(contentArray);
+				this.treeCtrl.openAll();
+			});
+		
+
+
+		//this.viewCtrl.treeCtrl.update(this.viewCtrl.treeCtrl.getTestContentArray());
+		//this.viewCtrl.treeCtrl.openAll();
+	}
+
+
+	private removeDuplicate(downloadList: DownloadListItem[], fileDict: {[id:number]: DownloadFileItem}) {
+		return new Bluebird<DownloadListItem[]>((resolve, reject) => {
+            var filtered = downloadList.filter(item => !fileDict[item.id]);
+			//console.log("filtered:", filtered);
+            resolve(filtered);
+		});
+	}
 }

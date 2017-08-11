@@ -1,4 +1,4 @@
-
+import * as $ from 'jquery';
 import * as Bluebird from 'bluebird'
 
 import { FileContent, DownloadListItem, DownloadFileItem } from './services/web-scraping';
@@ -7,9 +7,9 @@ import { FileContent, DownloadListItem, DownloadFileItem } from './services/web-
 
 export class TreeController {
 
-	ele: JQuery<HTMLElement>;
-	tree: JSTree;
-	data: any[] = [];
+	ele         : JQuery<HTMLElement>;
+	tree        : JSTree;
+	data        : any[] = [];
 	contentArray: FileContent[] = [];
 
 	constructor(selector: string) {
@@ -63,7 +63,6 @@ export class TreeController {
 		}
 	}
 
-
 	update(contentArray: FileContent[]) {
 		this.contentArray = contentArray;
 		this.data = this.conevrtToJsTreeData(contentArray);
@@ -71,6 +70,67 @@ export class TreeController {
 		(<any>this.tree).element.trigger("resize_column.jstree-table"); // Force jsTreeTable calculate the height of the cell (jsTreeTable.js:340)
 		//console.log("jsTree Data:", Data.jsTreeData);
 	}
+
+	edit(id: number, callback: (node: any) => any) {
+		if(this.tree) {
+			var node = this.tree.get_node(id);
+			var newNode = callback(node);
+			if(!newNode) newNode = node;
+			this.tree.redraw_node(newNode, null, null, null);
+		}
+	}
+
+	editData(id: number, dataFiled: string, value: string) {
+		if(this.tree) {		
+			var node = this.tree.get_node(id);
+			node.data[dataFiled] = value;
+			this.tree.redraw_node(node, null, null, null);
+		}
+	}
+	getRowDOM(id: number): JQuery<HTMLElement> {
+		var cell0 = $("#"+id+"_anchor");
+		var otherCell = $(".jstable_"+id+"_col");
+		return cell0.add(otherCell);
+	}
+
+	getContentArray() {
+		return this.contentArray;
+	}
+
+	// --------------------------------------------------------------------------------
+
+	forEach(callback: (item: any) => void) {
+		if(this.tree) {
+			this.tree
+				.get_json(null, <any> {flat: true})
+				.forEach(callback);
+		}
+	}
+
+	find(condition: (item: any) => boolean): any {
+		if(this.tree) {
+			var array = this.tree.get_json(null, <any> {flat: true});
+			for(var i = 0; i < array.length; i++) {
+				var item = array[i];
+				if(condition(item) !== true) return item;
+			}
+			return null;
+		} else {
+			return null;
+		}
+	}
+
+	getFolderPath(id: number, contentArray: FileContent[]): string {
+		if(id === undefined) {
+			return "";
+		} else {
+			var fileItem = contentArray[id];
+			var parentFolderPath = this.getFolderPath(fileItem.parent, contentArray);
+			return parentFolderPath + fileItem.name + "/";
+		}
+	}
+
+	// --------------------------------------------------------------------------------
 
 	getTestContentArray(): FileContent[] {
 		return [
@@ -349,50 +409,7 @@ export class TreeController {
 			];
 	}
 
-
-
-	forEach(callback: (item: any) => void) {
-		if(this.tree) {
-			this.tree
-				.get_json(null, <any> {flat: true})
-				.forEach(callback);
-		}
-	}
-
-	find(condition: (item: any) => boolean): any {
-		if(this.tree) {
-			var array = this.tree.get_json(null, <any> {flat: true});
-			for(var i = 0; i < array.length; i++) {
-				var item = array[i];
-				if(condition(item) !== true) return item;
-			}
-			return null;
-		} else {
-			return null;
-		}
-	}
-
-	edit(id: number, callback: (node: any) => any) {
-		if(this.tree) {
-			var node = this.tree.get_node(id);
-			var newNode = callback(node);
-			if(!newNode) newNode = node;
-			this.tree.redraw_node(newNode, null, null, null);
-		}
-	}
-
-	editData(id: number, dataFiled: string, value: string) {
-		if(this.tree) {		
-			var node = this.tree.get_node(id);
-			node.data[dataFiled] = value;
-			this.tree.redraw_node(node, null, null, null);
-		}
-	}
-	getRowDOM(id: number): JQuery<HTMLElement> {
-		var cell0 = $("#"+id+"_anchor");
-		var otherCell = $(".jstable_"+id+"_col");
-		return cell0.add(otherCell);
-	}
+	// --------------------------------------------------------------------------------
 
 	private conevrtToJsTreeData(contentArray: FileContent[]) {
 		var data = [];
@@ -410,25 +427,5 @@ export class TreeController {
 			});
 		}
 		return data;
-	}
-
-
-
-	getFolderPath(id: number, contentArray: FileContent[]): string {
-		if(id === undefined) {
-			return "";
-		} else {
-			var fileItem = contentArray[id];
-			var parentFolderPath = this.getFolderPath(fileItem.parent, contentArray);
-			return parentFolderPath + fileItem.name + "/";
-		}
-	}
-
-	removeDuplicate(downloadList: DownloadListItem[], fileDict: {[id:number]: DownloadFileItem}) {
-		return new Bluebird<DownloadListItem[]>((resolve, reject) => {
-            var filtered = downloadList.filter(item => !fileDict[item.id]);
-			//console.log("filtered:", filtered);
-            resolve(filtered);
-		});
 	}
 }
