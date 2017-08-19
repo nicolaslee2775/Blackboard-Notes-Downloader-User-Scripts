@@ -12,7 +12,7 @@ interface Initializable {
 }
 export interface UiComponent extends Initializable {}
 
-type UiComponentSet = {[key: string]: UiComponent };
+type UiComponentSet = Map<UiComponent>;
 
 
 

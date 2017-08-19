@@ -6,8 +6,6 @@ import { Http } from './http';
 import { Tree } from '../view/ui-component/tree';
 
 
-type Map<T> = {[key: number]: T};
-
 class Counter {
 	id: number = 0;
 	get =  () => this.id++;

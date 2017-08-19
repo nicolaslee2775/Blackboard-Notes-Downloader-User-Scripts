@@ -26,24 +26,22 @@ var TEST_MODE = unsafeWindow.TEST_MODE || false;
 
 /*
 
-
 Fetch contentArray
 	contentUrlArray: { url, name }[]
 	contentArray: FileContent[]
 
-Start (Download Files)
+Download Files
 	downloadList: DownloadListItem[]
 	fileArray: DownloadFileItem[]
 
-Download (Archive and downlaod zip file)
+Archive and downlaod zip file
 	
-
 */
 
 
 interface Model {
 	contentArray: FileContent[]
-	fileDict    : {[id: number]: DownloadFileItem};
+	fileDict    : Map<DownloadFileItem>;
 }
 
 
