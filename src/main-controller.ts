@@ -69,8 +69,8 @@ export class MainController {
 		selectAllBtn      : new Button("#BND-select-all"),
 		deselectAllBtn    : new Button("#BND-deselect-all"),
 		toggleSelectionBtn: new Button("#BND-toggle-selection"),
-		startBtn          : new Button("#BND-start"),
-		downloadBtn       : new Button("#BND-download", { disabled: true }),
+		downloadBtn       : new Button("#BND-download"),
+		archiveBtn        : new Button("#BND-archive", { disabled: true }),
 
 		tree: new Tree("#BND-jstree-div")
 	};
@@ -85,8 +85,8 @@ export class MainController {
 		this.ui.selectAllBtn.onClick.attach(() => this.ui.tree.selectAll());
 		this.ui.deselectAllBtn.onClick.attach(() => this.ui.tree.deselectAll());
 		this.ui.toggleSelectionBtn.onClick.attach(() => this.ui.tree.toggleSelection());
-		this.ui.startBtn.onClick.attach(() => this.start());
-		this.ui.downloadBtn.onClick.attach(() => this.download());
+		this.ui.downloadBtn.onClick.attach(() => this.downloadFiles());
+		this.ui.archiveBtn.onClick.attach(() => this.archive());
 	}
 
 	init() {
@@ -128,7 +128,7 @@ export class MainController {
 		}
 	}
 
-	start() {
+	downloadFiles() {
 		let contentArray = this.ui.tree.getContentArray();
 		if(contentArray.length === 0) return;
 
@@ -152,12 +152,12 @@ export class MainController {
 			onAllDownloaded: (files => {
 				files.forEach(file => this.model.fileDict[file.id] = file);
 
-				this.ui.downloadBtn.enable();
+				this.ui.archiveBtn.enable();
 			}),
 		});
 	}
 
-	download() {
+	archive() {
 		//console.log("download");
 		var zip = new JSZip();
 
