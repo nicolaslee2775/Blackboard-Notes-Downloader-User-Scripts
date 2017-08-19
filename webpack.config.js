@@ -12,7 +12,18 @@ module.exports = {
     devtool: 'source-map', // if we want a source map 
     module: {
         loaders: [
-			{ test: /\.ts$/, loader: 'ts-loader' }
+			{ 
+				test: /\.ts$/, 
+				loader: 'ts-loader' 
+			}, {
+                test: /\.html$/,
+                exclude: /node_modules/,
+                loader: "html-loader?exportAsEs6Default"
+            }, {
+                test: /\.css$/,
+                exclude: /node_modules/,
+                loader: "html-loader?exportAsEs6Default"
+            }
         ]
 	},
 	
