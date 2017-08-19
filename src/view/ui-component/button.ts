@@ -28,9 +28,9 @@ export class Button implements UiComponent {
 	}
 
 	enable() {
-		this.ele$.attr("disabled", "false").removeClass("ui-state-disabled")
+		this.ele$.attr("disabled", <any> false).removeClass("ui-state-disabled")
 	}
 	disable() {
-		this.ele$.attr("disabled", "true").addClass("ui-state-disabled");		
+		this.ele$.attr("disabled", <any> true).addClass("ui-state-disabled");		
 	}
 }

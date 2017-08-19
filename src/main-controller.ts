@@ -1,12 +1,14 @@
-import * as $ from 'jquery'
-import 'jquery-ui/ui/widgets/dialog'
-import 'jquery-ui/ui/widgets/tabs'
-import 'jstree'
-import * as JSZip from 'jszip/dist/jszip.min'
-import * as Bluebird from 'bluebird'
-import * as fileSaver from 'file-saver'
+import * as $ from 'jquery';
+import 'jquery-ui/ui/widgets/dialog';
+import 'jquery-ui/ui/widgets/tabs';
+import 'jstree';
+import './lib/jstree-table';
+import * as JSZip from 'jszip/dist/jszip.min';
+import * as Bluebird from 'bluebird';
+import * as fileSaver from 'file-saver';
 
 
+import { Event } from './services/event';
 import { Http } from './services/http';
 import { WebScraping, FileContent, DownloadFileItem, DownloadListItem } from './services/web-scraping';
 
@@ -19,8 +21,24 @@ import { Textbox } from './view/ui-component/textbox';
 
 
 declare var unsafeWindow;
-declare var TEST_MODE;
+var TEST_MODE = unsafeWindow.TEST_MODE || false;
 
+
+/*
+
+
+Fetch contentArray
+	contentUrlArray: { url, name }[]
+	contentArray: FileContent[]
+
+Start (Download Files)
+	downloadList: DownloadListItem[]
+	fileArray: DownloadFileItem[]
+
+Download (Archive and downlaod zip file)
+	
+
+*/
 
 
 interface Model {
@@ -40,8 +58,6 @@ export class MainController {
 		contentArrayFeteched: false
 	};
 
-	viewCtrl = new ViewController();
-
 	ui = {
 		tabs: new Tabs("#BND-tabs"),
 
@@ -57,8 +73,12 @@ export class MainController {
 		downloadBtn       : new Button("#BND-download", { disabled: true }),
 
 		tree: new Tree("#BND-jstree-div")
-	}
+	};
 	
+
+	viewCtrl = new ViewController();
+	webScraping = new WebScraping();
+	document: Document;
 
 	constructor() {
 		this.ui.openDownloaderBtn.onClick.attach(() => this.openDownloader());
@@ -70,6 +90,8 @@ export class MainController {
 	}
 
 	init() {
+		this.document = document;
+
 		this.viewCtrl.initUi(this.ui);
 
 		if(TEST_MODE) {
@@ -86,8 +108,22 @@ export class MainController {
 
 			if(TEST_MODE) {
 				this.fetchFakeContentArray();
+
 			} else {
-				this.fetchContentArray();			
+				let defaultZipName = this.webScraping.getCourseName(this.document);
+				this.ui.zipNameTextbox.setText(defaultZipName);
+				
+				this.webScraping.getContentArray(this.document, {
+					onUpdate: (contentArray) => {
+						this.ui.tree.update(contentArray);
+					},
+					onCompleted: (contentArray) => {
+						unsafeWindow.contentArray = contentArray;
+
+						this.ui.tree.update(contentArray);
+						//this.ui.tree.openAll();
+					}
+				});		
 			}
 		}
 	}
@@ -96,252 +132,51 @@ export class MainController {
 		let contentArray = this.ui.tree.getContentArray();
 		if(contentArray.length === 0) return;
 
-		let webScraping = new WebScraping();
-
-		webScraping.prepareDownloadList(contentArray, this.ui.tree)
-			.then(downloadList => this.removeDuplicate(downloadList, this.model.fileDict))
-			.tap(downloadList => 
+		this.webScraping.downloadFiles(contentArray, this.ui.tree, this.model.fileDict, {
+			onStartDownload: (downloadList => {
 				downloadList.forEach(item => {
 					this.ui.tree.editData(item.id, "status", "Downloading...");
 					this.ui.tree.getRowDOM(item.id).attr("BND-status", "downloading");
-				})
-			)
-            .map<DownloadListItem, DownloadFileItem>(item => 
-				Http.downloadFile(item.url)
-					.then(result => ({
-						id: item.id,
-						name: item.name,
-						path: item.path,
-						data: result.response,
-						url: result.responseURL
-					}))
-					.tap(file => {
-						console.log("Downloaded!", {id: file.id, name: file.name, url: file.url});
+				});
+			}),
+			onFileDownloaded: (file => {
+				console.log("Downloaded!", {id: file.id, name: file.name, url: file.url});
+				
+				var index = file.url.lastIndexOf("/") + 1;
+				var fileName = decodeURIComponent(file.url.substring(index));
+				this.ui.tree.editData(file.id, "fileName", fileName);
 
-						var index = file.url.lastIndexOf("/") + 1;
-						var fileName = decodeURIComponent(file.url.substring(index));
-						this.ui.tree.editData(file.id, "fileName", fileName);
-
-						this.ui.tree.editData(file.id, "status", "Done!");
-						this.ui.tree.getRowDOM(file.id).attr("BND-status", "done");
-					})
-			)
-			.then(fileArray => {
-				fileArray.forEach(file => this.model.fileDict[file.id] = file);
+				this.ui.tree.editData(file.id, "status", "Done!");
+				this.ui.tree.getRowDOM(file.id).attr("BND-status", "done");
+			}),
+			onAllDownloaded: (files => {
+				files.forEach(file => this.model.fileDict[file.id] = file);
 
 				this.ui.downloadBtn.enable();
-			});
+			}),
+		});
 	}
 
 	download() {
-		console.log("download");
+		//console.log("download");
 		var zip = new JSZip();
-
-		//unsafeWindow.JSZip = JSZip;
 
 		for(var id in this.model.fileDict) {
 			let item = this.model.fileDict[id];
-			console.log("item:", item);
+			//console.log("item:", item);
 
 			var fileExtension = item.url.substring(item.url.lastIndexOf("."));
 			zip.file(item.path + item.name + fileExtension, item.data);
 		}
 
-		console.log("files:", zip.files);
+		//console.log("files:", zip.files);
 		return zip.generateAsync({type:"blob"})
 			.then(blob => {
-				console.log("archived!");
+				//console.log("archived!");
 				var zipName = this.ui.zipNameTextbox.getText();
 				fileSaver.saveAs(blob, zipName + ".zip");
 			});
 	}
-
-	/*
-	private getFileArray(html: string, parentId: number = undefined) {
-        var isDefined = (obj) => obj !== undefined;
-        
-        var counter = { id: 0, get:() => counter.id++ },
-            //parentId = (this !== window && isDefined(this.parentId)) ? (this.parentId) : undefined,
-            contentArray: FileContent[] = [];
-        
-
-        return _getFileArray(html, parentId);
-
-        //----------------------------------------------
-
-        function _getFileArray(html, parentId) {
-            //var testArray = [];
-
-            return new Bluebird<FileContent[]>(function(resolve, reject) {
-                 var deferredTask = []; // for each folder
-
-                 var contentListItem = $(html).find("li[id^='contentListItem']");
-
-                 contentListItem.each(function(){
-                    var item = this;
-                    var iconSrc = (<HTMLImageElement> $(item).find(".item_icon")[0]).src;
-
-                    var isFile = _endsWith(iconSrc, "file_on.gif"),
-                        isDocument = _endsWith(iconSrc, "document_on.gif"),
-                        isFolder = _endsWith(iconSrc, "folder_on.gif");
-                    //console.log(isFile, iconSrc);
-
-                    //console.log(isFile, isDocument, isFolder);
-                    if(isFile) {
-                       var fileName = $(item).find("div.item a>span").text(),
-                           fileUrl = $(item).find("div.item a").attr("href");
-                       contentArray.push({
-                          id: counter.get(),
-                          parent: isDefined(parentId) ? parentId : undefined,
-                          type: "File",
-                          name: fileName,
-                          url: fileUrl
-                       });
-
-                    } else if(isDocument) {
-                       var docName = $(item).find("div.item span+span").text(),
-                           docFileName = $(item).find("div.details .attachments a").text(),
-                           docUrl = $(item).find("div.details .attachments a").attr("href");
-                       contentArray.push({
-                          id: counter.get(),
-                          parent: isDefined(parentId) ? parentId : undefined,
-                          type: "Doc",
-                          name: docName,
-                          attachmentName: docFileName,
-                          url: docUrl
-                       });
-
-                    } else if(isFolder) {
-                       var folderName = $(item).find("div.item a>span").text(),
-                           folderUrl = $(item).find("div.item a").attr("href");
-
-                       var temp = {
-                          id: counter.get(),
-                          parent: isDefined(parentId) ? parentId : undefined,
-                          type: "Folder",
-                          name: folderName,
-                          url: folderUrl
-                       };
-                       contentArray.push(temp);
-
-                       //console.log({folder: folderName, url: folderUrl});
-
-                       deferredTask.push(
-                          Http.downloadPage(folderUrl).then(function(html) {
-                             return _getFileArray(html, temp.id);
-                          })
-                       );
-                    }
-
-                    //testArray.push(contentArray[contentArray.length-1]);
-                 });
-
-                 //console.log("parentId:", parentId, testArray);
-
-                 Bluebird.all(deferredTask)
-                    .then(function() {
-                        resolve(contentArray);
-                     });
-
-          });
-		}
-		
-		function _endsWith(str: string, pattern: string) {
-			var d = str.length - pattern.length;
-			return d >= 0 && str.indexOf(pattern, d) === d;
-		}
-	}
-	
-	private _getFileArray(html: string, parentId: number = undefined) {
-        var isDefined = (obj) => obj !== undefined;
-        
-        var counter = { id: 0, get:() => counter.id++ },
-            //parentId = (this !== window && isDefined(this.parentId)) ? (this.parentId) : undefined,
-            contentArray: FileContent[] = [];
-        
-            //var testArray = [];
-
-		function _endsWith(str: string, pattern: string) {
-			var d = str.length - pattern.length;
-			return d >= 0 && str.indexOf(pattern, d) === d;
-		}
-		
-		return new Bluebird<FileContent[]>(function(resolve, reject) {
-			var deferredTask = []; // for each folder
-
-			var contentListItem = $(html).find("li[id^='contentListItem']");
-
-			contentListItem.each(function(){
-			var item = this;
-			var iconSrc = (<HTMLImageElement> $(item).find(".item_icon")[0]).src;
-
-			var isFile 		= _endsWith(iconSrc, "file_on.gif"),
-				isDocument  = _endsWith(iconSrc, "document_on.gif"),
-				isFolder 	= _endsWith(iconSrc, "folder_on.gif");
-			//console.log(isFile, iconSrc);
-
-			//console.log(isFile, isDocument, isFolder);
-			if(isFile) {
-				var fileName = $(item).find("div.item a>span").text(),
-					fileUrl = $(item).find("div.item a").attr("href");
-				contentArray.push({
-					id: counter.get(),
-					parent: isDefined(parentId) ? parentId : undefined,
-					type: "File",
-					name: fileName,
-					url: fileUrl
-				});
-
-			} else if(isDocument) {
-				var docName = $(item).find("div.item span+span").text(),
-					docFileName = $(item).find("div.details .attachments a").text(),
-					docUrl = $(item).find("div.details .attachments a").attr("href");
-				contentArray.push({
-					id: counter.get(),
-					parent: isDefined(parentId) ? parentId : undefined,
-					type: "Doc",
-					name: docName,
-					attachmentName: docFileName,
-					url: docUrl
-				});
-
-			} else if(isFolder) {
-				var folderName = $(item).find("div.item a>span").text(),
-					folderUrl = $(item).find("div.item a").attr("href");
-
-				var temp = {
-					id: counter.get(),
-					parent: isDefined(parentId) ? parentId : undefined,
-					type: "Folder",
-					name: folderName,
-					url: folderUrl
-				};
-				contentArray.push(temp);
-
-				//console.log({folder: folderName, url: folderUrl});
-
-				deferredTask.push(
-					Http.downloadPage(folderUrl).then(function(html) {
-						return _getFileArray(html, temp.id);
-					})
-				);
-			}
-
-			//testArray.push(contentArray[contentArray.length-1]);
-			});
-
-			//console.log("parentId:", parentId, testArray);
-
-			Bluebird.all(deferredTask)
-			.then(function() {
-				resolve(contentArray);
-				});
-
-		});
-		
-		
-	}
-	*/
 
 	private fetchFakeContentArray() {
 		this.ui.zipNameTextbox.setText("test");
@@ -351,63 +186,5 @@ export class MainController {
 		unsafeWindow.contentArray = contentArray;
 		this.ui.tree.update(contentArray);
 		this.ui.tree.openAll();
-	}
-	private fetchContentArray() {
-		var defaultZipName = $("#courseMenuPalette_paletteTitleHeading a.comboLink").text();
-		this.ui.zipNameTextbox.setText(defaultZipName);
-
-		
-		var contentUrlArray: { url: string, name: string }[] = <any> $("#courseMenuPalette_contents>li>a[href^='/webapps/blackboard/content/listContent.jsp']").map((i, item) => ({ 
-			url: (<any> item).href, 
-			name: $(item).find("span").attr("title") 
-		}));
-		
-		console.log({ contentUrlArray: contentUrlArray });
-		
-		var counter = {
-			id: 0,
-			get: () => counter.id++,
-			set: (val) => counter.id = val
-		};
-		
-		
-		//counter.set(contentUrlArray.length);
-
-
-		var webScraping = new WebScraping();
-		
-		Bluebird.map(contentUrlArray, contentUrl => {
-
-				let parentContent = {
-					id: counter.get(),
-					parent: undefined,
-					type: "Folder",
-					name: contentUrl.name,
-					url: contentUrl.url
-				};
-			
-				return Http.downloadPage(contentUrl.url)
-					.then(html => webScraping.getFileArray(html, parentContent.id, counter))
-					//.tap(subContentArray => console.log("subContentArray:", subContentArray))
-					.then(subContentArray => subContentArray.concat([parentContent]))
-			})
-			.reduce<FileContent[], FileContent[]>((prev, next) => prev.concat(next)) // 2D -> 1D
-			.then(contentArray => contentArray.sort((a, b) => a.id - b.id))
-			.then(contentArray => {
-				console.log("contentArray:", contentArray);
-				console.log(JSON.stringify(contentArray));
-				unsafeWindow.contentArray = contentArray;
-				this.ui.tree.update(contentArray);
-				this.ui.tree.openAll();
-			});
-	}
-
-
-	private removeDuplicate(downloadList: DownloadListItem[], fileDict: {[id:number]: DownloadFileItem}) {
-		return new Bluebird<DownloadListItem[]>((resolve, reject) => {
-            var filtered = downloadList.filter(item => !fileDict[item.id]);
-			//console.log("filtered:", filtered);
-            resolve(filtered);
-		});
 	}
 }
