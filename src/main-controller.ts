@@ -1,5 +1,6 @@
 import * as $ from 'jquery'
 import 'jquery-ui/ui/widgets/dialog'
+import 'jquery-ui/ui/widgets/tabs'
 import 'jstree'
 import * as JSZip from 'jszip/dist/jszip.min'
 import * as Bluebird from 'bluebird'
@@ -9,11 +10,12 @@ import * as fileSaver from 'file-saver'
 import { Http } from './services/http';
 import { WebScraping, FileContent, DownloadFileItem, DownloadListItem } from './services/web-scraping';
 
-import { Tree } from './classes/tree';
-import { ViewController } from './view-controller';
-import { Button } from './classes/button';
-import { Dialog } from './classes/dialog';
-import { Textbox } from './classes/textbox';
+import { ViewController } from './view/view-controller';
+import { Tabs } from './view/ui-component/tabs';
+import { Tree } from './view/ui-component/tree';
+import { Button } from './view/ui-component/button';
+import { Dialog } from './view/ui-component/dialog';
+import { Textbox } from './view/ui-component/textbox';
 
 
 declare var unsafeWindow;
@@ -41,6 +43,8 @@ export class MainController {
 	viewCtrl = new ViewController();
 
 	ui = {
+		tabs: new Tabs("#BND-tabs"),
+
 		dialog: new Dialog("#BND-filetree-dialog"),
 
 		zipNameTextbox: new Textbox("#BND-zip-name"),
@@ -67,6 +71,11 @@ export class MainController {
 
 	init() {
 		this.viewCtrl.initUi(this.ui);
+
+		if(TEST_MODE) {
+			unsafeWindow.$ = $;
+			setTimeout(() => this.openDownloader(), 100);		
+		}
 	}
 
 	openDownloader() {

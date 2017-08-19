@@ -2,7 +2,7 @@ import * as $ from 'jquery';
 import * as Bluebird from 'bluebird'
 
 import { UiComponent } from '../view-controller';
-import { FileContent, DownloadListItem, DownloadFileItem } from '../services/web-scraping';
+import { FileContent, DownloadListItem, DownloadFileItem } from '../../services/web-scraping';
 
 
 

@@ -1,7 +1,8 @@
 import * as $ from 'jquery';
 
-import { Event } from '../services/event';
+import { Event } from '../../services/event';
 import { UiComponent } from '../view-controller';
+
 
 export interface DialogParam {
 }
@@ -22,7 +23,7 @@ export class Dialog implements UiComponent {
 		this.ele$.dialog({
 			autoOpen: false,
 			modal: true,
-			height: 400,
+			height: 600,
 			width: '70%',
 			//position: 'absolute',
 			close: () => this.onClose.notify()

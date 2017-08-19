@@ -1,0 +1,27 @@
+/* ----- Remove jsTreeTable selected color ----- */
+
+.jstree-default .jstree-wholerow-clicked,
+.jstree-table-midwrapper a.jstree-clicked:before,
+.jstree-table-midwrapper a.jstree-hovered:before,
+.jstree-default .jstree-wholerow-hovered {
+	background: none;
+}
+.ui-button,.ui-widget {
+	font-size: small;
+}
+
+
+/* ----- Status color ----- */
+
+.jstree-table-col-0[BND-status='idle'],
+.jstree-table-cell[BND-status='idle'] {
+	background: none;
+}
+.jstree-table-col-0[BND-status='downloading'],
+.jstree-table-cell[BND-status='downloading'] {
+	background: #f9efe2 !important;
+}
+.jstree-table-col-0[BND-status='done'],
+.jstree-table-cell[BND-status='done'] {
+	background: #e4f7f1 !important;
+}

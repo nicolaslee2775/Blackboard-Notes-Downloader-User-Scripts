@@ -1,7 +1,8 @@
 import * as $ from 'jquery';
 
-import { Event } from '../services/event';
+import { Event } from '../../services/event';
 import { UiComponent } from '../view-controller';
+
 
 export interface ButtonParam {
 	disabled?: boolean

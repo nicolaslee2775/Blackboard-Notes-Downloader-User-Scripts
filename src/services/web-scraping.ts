@@ -2,7 +2,7 @@ import * as $ from 'jquery';
 import * as Bluebird from 'bluebird';
 
 import { Http } from './http';
-import { Tree } from '../classes/tree';
+import { Tree } from '../view/ui-component/tree';
 
 
 export interface FileContent {
