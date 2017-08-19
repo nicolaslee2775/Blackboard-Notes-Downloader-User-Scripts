@@ -1,19 +1,22 @@
 import * as $ from 'jquery';
 import * as Bluebird from 'bluebird'
 
-import { FileContent, DownloadListItem, DownloadFileItem } from './services/web-scraping';
+import { UiComponent } from '../view-controller';
+import { FileContent, DownloadListItem, DownloadFileItem } from '../services/web-scraping';
 
 
 
-export class TreeController {
+export class Tree implements UiComponent {
 
 	ele         : JQuery<HTMLElement>;
 	tree        : JSTree;
 	data        : any[] = [];
 	contentArray: FileContent[] = [];
 
-	constructor(selector: string) {
-		this.ele = $(selector);
+	constructor(private selector: string) {}
+
+	init() {
+		this.ele = $(this.selector);
 		this.ele.jstree({ 
 			core: { 
 				data: (obj, callback) => callback.call(this, this.data),

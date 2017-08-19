@@ -1,48 +1,26 @@
 import * as $ from 'jquery';
-import { Event } from './services/event';
 
 
-import { TreeController } from './tree-controller';
+interface Initializable {
+	init: () => void
+}
+export interface UiComponent extends Initializable {}
+
+type UiComponentSet = {[key: string]: UiComponent };
 
 
 
 export class ViewController {
 
-	openDownloaderBtn: JQuery<HTMLButtonElement>;
-	dialog           : JQuery<HTMLElement>;
-	zipNameTextbox   : JQuery<HTMLInputElement>;
-	
-    selectAllBtn      : JQuery<HTMLButtonElement>;
-    deselectAllBtn    : JQuery<HTMLButtonElement>;
-    toggleSelectionBtn: JQuery<HTMLButtonElement>;
-    startBtn          : JQuery<HTMLButtonElement>;
-    downloadBtn       : JQuery<HTMLButtonElement>;
-	
-	//treeDiv: JQuery<HTMLElement>;
-	//tree: JSTree;
-	//treeCtrl: TreeController;
-
-
-
-	onOpenDownloader  = new Event<void>();
-	onSelectAll       = new Event<void>();
-	onDeselectAll     = new Event<void>();
-	onToggleSelection = new Event<void>();
-	onStart           = new Event<void>();
-	onDownload        = new Event<void>();
-	
-
-	// ---------------------------------------------------------------
 	constructor() {}
 
 	// ---------------------------------------------------------------
 
-	initUi() {
+	initUi(ui: UiComponentSet) {
 		this.loadCss();
 		this.injectDomElement();
-		this.getDomElement();
 
-		this.setup();
+		this.initUiComponents(ui);
 	}
 
 	private loadCss() {
@@ -119,74 +97,12 @@ export class ViewController {
 		`);
 	}
 
-	private getDomElement() {
-		this.openDownloaderBtn = <any> $("#BND-open-downloader");
-		this.dialog = $("#BND-filetree-dialog");
-		this.zipNameTextbox = <any> $("#BND-zip-name");
-
-		this.selectAllBtn = <any> $("#BND-select-all");
-		this.deselectAllBtn = <any> $("#BND-deselect-all");
-		this.toggleSelectionBtn = <any> $("#BND-toggle-selection");
-		this.startBtn = <any> $("#BND-start");
-		this.downloadBtn = <any> $("#BND-download");
-
-		//this.treeDiv = $('#BND-jstree-div');
-
-		//this.treeCtrl = new TreeController("#BND-jstree-div");
+	private initUiComponents(ui: UiComponentSet) {
+		for(var key in ui) {
+			let component = ui[key];
+			component.init();
+		}
 	}
-
-	private setup() {
-
-		// jsTree
-		//this.treeCtrl.update(this.treeCtrl.getTestContentArray());
-		
-		
-		// Dialog
-		
-		this.dialog.dialog({
-			autoOpen: false,
-			modal: true,
-			height: 400,
-			width: '70%',
-			close: function() {
-				//(Obj.tree).destroy();
-				//Obj.tree = null;
-			}
-		});
-		$(".ui-dialog").css("position", "absolute"); // Unknown issue: the position of ui-dialog would become 'relative'
-		
-		
-		// Button
-		
-		
-		this.openDownloaderBtn
-			.button()
-			.on("click", () => this.onOpenDownloader.notify());
-		
-		this.selectAllBtn
-			.button()
-			.on("click", () => this.onSelectAll.notify());
-		
-		this.deselectAllBtn
-			.button()
-			.on("click", () => this.onDeselectAll.notify());
-		
-		this.toggleSelectionBtn
-			.button()
-			.on("click", () => this.onToggleSelection.notify());
-
-		this.startBtn
-			.button()
-			.on("click", () => this.onStart.notify());
-		
-		this.downloadBtn
-			.button()
-			.attr("disabled", "true")
-			.addClass("ui-state-disabled")
-			.on("click", () => this.onDownload.notify());
-	}
-
-	
 
 	// ---------------------------------------------------------------
 

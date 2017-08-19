@@ -2,7 +2,7 @@ import * as $ from 'jquery';
 import * as Bluebird from 'bluebird';
 
 import { Http } from './http';
-import { TreeController } from '../tree-controller';
+import { Tree } from '../classes/tree';
 
 
 export interface FileContent {
@@ -132,15 +132,15 @@ export class WebScraping {
 		return d >= 0 && str.indexOf(pattern, d) === d;
 	}
 
-	prepareDownloadList(contentArray: FileContent[], treeCtrl: TreeController) {
+	prepareDownloadList(contentArray: FileContent[], tree: Tree) {
 		return new Bluebird<DownloadListItem[]>((resolve, reject) => {
 			var downloadList: DownloadListItem[] = [];
 
-			treeCtrl.forEach(viewItem => {
+			tree.forEach(viewItem => {
 				if(viewItem.type === "Folder") return;
 
-				var selected = treeCtrl.tree.is_selected(viewItem),
-					undetermined = treeCtrl.tree.is_undetermined(viewItem);
+				var selected = tree.tree.is_selected(viewItem),
+					undetermined = tree.tree.is_undetermined(viewItem);
 
 				if(selected || undetermined) {
 					var fileItem = contentArray[viewItem.id];
@@ -148,7 +148,7 @@ export class WebScraping {
 					downloadList.push({
 						id: viewItem.id,
 						name: viewItem.text, 
-						path: treeCtrl.getFolderPath(fileItem.parent, contentArray), 
+						path: tree.getFolderPath(fileItem.parent, contentArray), 
 						url: fileItem.url
 					});
 				}
