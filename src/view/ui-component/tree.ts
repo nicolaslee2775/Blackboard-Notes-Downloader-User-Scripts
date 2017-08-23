@@ -68,7 +68,7 @@ export class Tree implements UiComponent {
 
 	update(contentArray: FileContent[]) {
 		this.contentArray = contentArray;
-		this.data = this.conevrtToJsTreeData(contentArray);
+		this.data = this.convertToJsTreeData(contentArray);
 		(<any>this.tree).refresh();
 		(<any>this.tree).element.trigger("resize_column.jstree-table"); // Force jsTreeTable calculate the height of the cell (jsTreeTable.js:340)
 		//console.log("jsTree Data:", Data.jsTreeData);
@@ -414,7 +414,7 @@ export class Tree implements UiComponent {
 
 	// --------------------------------------------------------------------------------
 
-	private conevrtToJsTreeData(contentArray: FileContent[]) {
+	private convertToJsTreeData(contentArray: FileContent[]) {
 		var data = [];
 		for(var i = 0; i < contentArray.length; i++) {
 			var item = contentArray[i];
