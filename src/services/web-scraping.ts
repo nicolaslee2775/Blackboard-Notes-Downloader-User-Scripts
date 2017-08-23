@@ -107,7 +107,7 @@ export class WebScraping {
 				let fileName = $(item).find("div.item a>span").text(),
 					fileUrl  = $(item).find("div.item a").attr("href");
 				
-					data.contentArray[id] = ({
+				data.contentArray[id] = ({
 					id    : id,
 					parent: isDefined(parentId) ? parentId: undefined,
 					type  : "File",
@@ -120,7 +120,7 @@ export class WebScraping {
 					docFileName = $(item).find("div.details .attachments a").text(),
 					docUrl      = $(item).find("div.details .attachments a").attr("href");
 				
-					data.contentArray[id] = ({
+				data.contentArray[id] = ({
 					id            : id,
 					parent        : isDefined(parentId) ? parentId: undefined,
 					type          : "Doc",
@@ -133,7 +133,7 @@ export class WebScraping {
 				let folderName = $(item).find("div.item a>span").text(),
 					folderUrl  = $(item).find("div.item a").attr("href");
 
-					data.contentArray[id] = ({
+				data.contentArray[id] = ({
 					id    : id,
 					parent: isDefined(parentId) ? parentId: undefined,
 					type  : "Folder",
