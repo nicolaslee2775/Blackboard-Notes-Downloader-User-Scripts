@@ -78,16 +78,11 @@ export class MainController {
 	webScraping = new WebScraping();
 	document: Document;
 
-	constructor() {
-		this.ui.openDownloaderBtn.onClick.attach(() => this.openDownloader());
-		this.ui.selectAllBtn.onClick.attach(() => this.ui.tree.selectAll());
-		this.ui.deselectAllBtn.onClick.attach(() => this.ui.tree.deselectAll());
-		this.ui.toggleSelectionBtn.onClick.attach(() => this.ui.tree.toggleSelection());
-		this.ui.downloadBtn.onClick.attach(() => this.downloadFiles());
-		this.ui.archiveBtn.onClick.attach(() => this.archive());
-	}
+	constructor() {}
 
 	init() {
+		this.bindEvents();
+		
 		this.document = document;
 
 		this.viewCtrl.initUi(this.ui);
@@ -174,6 +169,15 @@ export class MainController {
 				var zipName = this.ui.zipNameTextbox.getText();
 				fileSaver.saveAs(blob, zipName + ".zip");
 			});
+	}
+
+	private bindEvents() {
+		this.ui.openDownloaderBtn.onClick.attach(() => this.openDownloader());
+		this.ui.selectAllBtn.onClick.attach(() => this.ui.tree.selectAll());
+		this.ui.deselectAllBtn.onClick.attach(() => this.ui.tree.deselectAll());
+		this.ui.toggleSelectionBtn.onClick.attach(() => this.ui.tree.toggleSelection());
+		this.ui.downloadBtn.onClick.attach(() => this.downloadFiles());
+		this.ui.archiveBtn.onClick.attach(() => this.archive());
 	}
 
 	private fetchFakeContentArray() {
