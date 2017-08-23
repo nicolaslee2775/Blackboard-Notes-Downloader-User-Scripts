@@ -418,7 +418,30 @@
 				copyData(oldtree,data.original,newtree,data.node,true);
 				newtree._prepare_table(obj);
 				return true;
-			});
+			})
+			.on("redraw.jstree", $.proxy(function(e, data) {
+				var self = this;
+
+				var root = self.get_node("#");
+				checkChildren(root);
+
+				function checkChildren(node) {
+					if(node.state.hidden) {
+						findDataCell(self.tableWrapper, node.id).remove();
+						for(var i = 0; i < node.children_d.length; i++) {
+							var child_d_id = node.children_d[i];
+							findDataCell(self.tableWrapper, child_d_id).remove();	
+						}
+					} else {
+						for(var i = 0; i < node.children.length; i++) {
+							var child_id = node.children[i];
+							var child = self.get_node(child_id);
+							checkChildren(child);
+						}
+					}
+				}
+			}, this));
+
 			if (this._tableSettings.isThemeroller) {
 				this.element
 					.on("select_node.jstree",$.proxy(function(e,data) {

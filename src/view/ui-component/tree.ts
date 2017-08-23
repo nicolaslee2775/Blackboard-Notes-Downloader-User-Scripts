@@ -418,16 +418,18 @@ export class Tree implements UiComponent {
 		var data = [];
 		for(var i = 0; i < contentArray.length; i++) {
 			var item = contentArray[i];
-			var parent = (item.parent === undefined) ? "#" : item.parent;
-			data.push({
-				id: item.id,
-				parent: parent,
-				text: item.name,
-				data: { attachmentName: item.attachmentName },
-				type: item.type,
+			if(item) {
+				var parent = (item.parent === undefined) ? "#" : item.parent;
+				data.push({
+					id: item.id,
+					parent: parent,
+					text: item.name,
+					data: { attachmentName: item.attachmentName },
+					type: item.type,
 
-				state: { opened: true, selected: false }
-			});
+					state: { opened: true, selected: false }
+				});
+			}
 		}
 		return data;
 	}

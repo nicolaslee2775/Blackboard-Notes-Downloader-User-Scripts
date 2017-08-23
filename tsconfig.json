@@ -5,5 +5,10 @@
 		"moduleResolution": "node",
 		"sourceMap": true,
 		"outDir": "build/"
-    }
+	},
+	"typeAcquisition": {
+		"include": [
+			"global"
+		]
+	}
 }
