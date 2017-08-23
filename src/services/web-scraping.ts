@@ -37,9 +37,9 @@ export interface DownloadFileItem {
 
 
 
-export interface GetContentArrayCallbacks {
-	onUpdate: (_contentArray: FileContent[]) => void
-	onCompleted: (contentArray: FileContent[]) => void
+export interface GetContentListCallbacks {
+	onUpdate: (_contentList: FileContent[]) => void
+	onCompleted: (contentList: FileContent[]) => void
 }
 
 export interface DownloadFilesCallbacks {
@@ -48,30 +48,36 @@ export interface DownloadFilesCallbacks {
 	onAllDownloaded: (files: DownloadFileItem[]) => void
 }
 
-interface GetFileArrayData {
-	contentArray: FileContent[]
+interface GetFileListData {
+	contentList: FileContent[]
 	counter: Counter
 	updateCallback: () => void
 }
 
-
+export function contentListToMap(list: FileContent[]): Map<FileContent> {
+	//return list.sort((a, b) => a.id - b.id);
+	var map = {};
+	for(var i = 0; i < list.length; i++) map[list[i].id] = list[i];
+	return map;
+}
+ 
 export class WebScraping {
 
 	getCourseName(document: Document) {
 		return $(document).find("#courseMenuPalette_paletteTitleHeading a.comboLink").text();		
 	}
 
-	getContentArray(document: Document, callbacks: GetContentArrayCallbacks) {
-		var contentArray: FileContent[] = [];
+	getContentList(document: Document, callbacks: GetContentListCallbacks) {
+		var contentList: FileContent[] = [];
 		
 		let counter = new Counter();
 		let commonData = {
-			contentArray: contentArray, 
+			contentList: contentList, 
 			counter: counter, 
-			updateCallback: () => callbacks.onUpdate(contentArray)
+			updateCallback: () => callbacks.onUpdate(contentList)
 		};
 
-		Bluebird.map(this.getContentUrlArray(document), contentUrl => {
+		Bluebird.map(this.getContentUrlList(document), contentUrl => {
 				let parentContent = {
 					id    : counter.get(),
 					parent: undefined,
@@ -79,15 +85,15 @@ export class WebScraping {
 					name  : contentUrl.name,
 					url   : contentUrl.url
 				};
-				contentArray[parentContent.id] = parentContent;
+				contentList.push(parentContent);
 			
 				return Http.downloadPage(contentUrl.url)
-					.then(html => this.getFileArray(html, parentContent.id, commonData))
+					.then(html => this.getFileList(html, parentContent.id, commonData))
 			})
-			.then(() => callbacks.onCompleted(contentArray));
+			.then(() => callbacks.onCompleted(contentList));
 	}
 
-	private getContentUrlArray(document: Document) {
+	private getContentUrlList(document: Document) {
 		return $(document)
 			.find("#courseMenuPalette_contents>li>a[href^='/webapps/blackboard/content/listContent.jsp']")
 			.toArray()
@@ -97,7 +103,7 @@ export class WebScraping {
 			}));
 	}
 
-	private getFileArray(html: string, parentId: number, data: GetFileArrayData) {
+	private getFileList(html: string, parentId: number, data: GetFileListData) {
 		let isDefined = (obj) => obj !== undefined;
 		
 		return new Bluebird<void>((resolve, reject) => {
@@ -107,7 +113,7 @@ export class WebScraping {
 				let fileName = $(item).find("div.item a>span").text(),
 					fileUrl  = $(item).find("div.item a").attr("href");
 				
-				data.contentArray[id] = ({
+				data.contentList.push({
 					id    : id,
 					parent: isDefined(parentId) ? parentId: undefined,
 					type  : "File",
@@ -120,7 +126,7 @@ export class WebScraping {
 					docFileName = $(item).find("div.details .attachments a").text(),
 					docUrl      = $(item).find("div.details .attachments a").attr("href");
 				
-				data.contentArray[id] = ({
+				data.contentList.push({
 					id            : id,
 					parent        : isDefined(parentId) ? parentId: undefined,
 					type          : "Doc",
@@ -133,7 +139,7 @@ export class WebScraping {
 				let folderName = $(item).find("div.item a>span").text(),
 					folderUrl  = $(item).find("div.item a").attr("href");
 
-				data.contentArray[id] = ({
+				data.contentList.push({
 					id    : id,
 					parent: isDefined(parentId) ? parentId: undefined,
 					type  : "Folder",
@@ -144,10 +150,9 @@ export class WebScraping {
 				deferredTask.push(
 					Http.downloadPage(folderUrl)
 						.tap(html => console.log("download! id:", id))
-						.then(html => this.getFileArray(html, id, data))
+						.then(html => this.getFileList(html, id, data))
 				);
 			};
-
 
 			$(html).find("li[id^='contentListItem']").each((_, item) => {
 				let id = data.counter.get();
@@ -162,22 +167,17 @@ export class WebScraping {
 				else if(isFolder) 	getFolderContent(item, id);
 			});
 
-
-			if(deferredTask.length === 0) {
+			Bluebird.all(deferredTask).then(() => {
 				data.updateCallback();
 				resolve();
-			} else {
-				Bluebird.all(deferredTask).then(() => {
-					data.updateCallback();
-					resolve();
-				});
-			}
+			});
 		});
 	}
 
-	downloadFiles(contentArray: FileContent[], tree: Tree, fileDict: Map<DownloadFileItem>, callbacks: DownloadFilesCallbacks) {
+	downloadFiles(contentList: FileContent[], tree: Tree, fileDict: Map<DownloadFileItem>, callbacks: DownloadFilesCallbacks) {
+		let contentMap = contentListToMap(contentList);
 
-		this.prepareDownloadList(contentArray, tree)
+		this.prepareDownloadList(contentMap, tree)
 			.then(downloadList => this.removeDuplicateFile(downloadList, fileDict))
 			.tap(downloadList => callbacks.onStartDownload(downloadList))
 			.map<DownloadListItem, DownloadFileItem>(item => 
@@ -191,10 +191,10 @@ export class WebScraping {
 					}))
 					.tap(file => callbacks.onFileDownloaded(file))
 			)
-			.then(fileArray => callbacks.onAllDownloaded(fileArray));
+			.then(fileList => callbacks.onAllDownloaded(fileList));
 	}
 
-	private prepareDownloadList(contentArray: FileContent[], tree: Tree) {
+	private prepareDownloadList(contentMap: Map<FileContent>, tree: Tree) {
 		return new Bluebird<DownloadListItem[]>((resolve, reject) => {
 			var downloadList: DownloadListItem[] = [];
 
@@ -205,12 +205,12 @@ export class WebScraping {
 					undetermined = tree.tree.is_undetermined(viewItem);
 
 				if(selected || undetermined) {
-					var fileItem = contentArray[viewItem.id];
+					var fileItem = contentMap[viewItem.id];
 
 					downloadList.push({
 						id: viewItem.id,
 						name: viewItem.text, 
-						path: tree.getFolderPath(fileItem.parent, contentArray), 
+						path: tree.getFolderPath(fileItem.parent, contentMap), 
 						url: fileItem.url
 					});
 				}

@@ -2,7 +2,7 @@ import * as $ from 'jquery';
 import * as Bluebird from 'bluebird'
 
 import { UiComponent } from '../view-controller';
-import { FileContent, DownloadListItem, DownloadFileItem } from '../../services/web-scraping';
+import { FileContent, DownloadListItem, DownloadFileItem, contentListToMap } from '../../services/web-scraping';
 
 
 
@@ -11,7 +11,7 @@ export class Tree implements UiComponent {
 	ele         : JQuery<HTMLElement>;
 	tree        : JSTree;
 	data        : any[] = [];
-	contentArray: FileContent[] = [];
+	contentList: FileContent[] = [];
 
 	constructor(private selector: string) {}
 
@@ -66,9 +66,9 @@ export class Tree implements UiComponent {
 		}
 	}
 
-	update(contentArray: FileContent[]) {
-		this.contentArray = contentArray;
-		this.data = this.convertToJsTreeData(contentArray);
+	update(contentList: FileContent[]) {
+		this.contentList = contentList;
+		this.data = this.convertToJsTreeData(contentList);
 		(<any>this.tree).refresh();
 		(<any>this.tree).element.trigger("resize_column.jstree-table"); // Force jsTreeTable calculate the height of the cell (jsTreeTable.js:340)
 		//console.log("jsTree Data:", Data.jsTreeData);
@@ -96,8 +96,8 @@ export class Tree implements UiComponent {
 		return cell0.add(otherCell);
 	}
 
-	getContentArray() {
-		return this.contentArray;
+	getContentList() {
+		return this.contentList;
 	}
 
 	// --------------------------------------------------------------------------------
@@ -123,19 +123,19 @@ export class Tree implements UiComponent {
 		}
 	}
 
-	getFolderPath(id: number, contentArray: FileContent[]): string {
+	getFolderPath(id: number, contentMap: Map<FileContent>): string {
 		if(id === undefined) {
 			return "";
 		} else {
-			var fileItem = contentArray[id];
-			var parentFolderPath = this.getFolderPath(fileItem.parent, contentArray);
+			var fileItem = contentMap[id];
+			var parentFolderPath = this.getFolderPath(fileItem.parent, contentMap);
 			return parentFolderPath + fileItem.name + "/";
 		}
 	}
 
 	// --------------------------------------------------------------------------------
 
-	getTestContentArray(): FileContent[] {
+	getTestContentList(): FileContent[] {
 		return [
 			{
 				"id": 0,
@@ -414,22 +414,21 @@ export class Tree implements UiComponent {
 
 	// --------------------------------------------------------------------------------
 
-	private convertToJsTreeData(contentArray: FileContent[]) {
+	private convertToJsTreeData(contentList: FileContent[]) {
+		let contentMap = contentListToMap(contentList);
+		
 		var data = [];
-		for(var i = 0; i < contentArray.length; i++) {
-			var item = contentArray[i];
-			if(item) {
-				var parent = (item.parent === undefined) ? "#" : item.parent;
-				data.push({
-					id: item.id,
-					parent: parent,
-					text: item.name,
-					data: { attachmentName: item.attachmentName },
-					type: item.type,
-
-					state: { opened: true, selected: false }
-				});
-			}
+		for(var id in contentMap) {
+			let item = contentMap[id];
+			let parent = (item.parent === undefined) ? "#" : item.parent;
+			data.push({
+				id: item.id,
+				parent: parent,
+				text: item.name,
+				data: { attachmentName: item.attachmentName },
+				type: item.type,
+				state: { opened: true, selected: false }
+			});
 		}
 		return data;
 	}
