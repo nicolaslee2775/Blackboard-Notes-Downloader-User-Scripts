@@ -19,6 +19,7 @@ export interface FileContent {
 	url?           : string
 	attachmentName?: string
 	parent?        : number
+	fileSize?      : number
 }
 
 export interface DownloadListItem {
@@ -44,6 +45,7 @@ export interface GetContentListCallbacks {
 
 export interface DownloadFilesCallbacks {
 	onStartDownload: (list: DownloadListItem[]) => void
+	onFileProgress?: (id: number, event: ProgressEvent) => void
 	onFileDownloaded: (file: DownloadFileItem) => void
 	onAllDownloaded: (files: DownloadFileItem[]) => void
 }
@@ -129,14 +131,29 @@ export class WebScraping {
 				docFileList.each((index, docFileEle) => {
 					let id = data.counter.get();
 					let docFileName  = $(docFileEle).find("a").text(),
-						docUrl       = $(docFileEle).find("a").attr("href");
+						docUrl       = $(docFileEle).find("a").attr("href"),
+						fileSizeText = $(docFileEle).find("[id$='fileSize']").text();
+					let fileSize: number = (function() {
+						let result = /([0-9.]+) (GB|MB|KB|B)/i.exec(fileSizeText);
+						if(result) {
+							let value = result[1], unit = result[2];
+							switch(unit) {
+								case "B": return parseFloat(value);
+								case "KB": return parseFloat(value) * 1024;
+								case "MB": return parseFloat(value) * 1024 * 1024;
+								case "GB": return parseFloat(value) * 1024 * 1024 * 1024;
+							}
+						}
+						return undefined;
+					})();
 					data.contentList.push({
 						id            : id,
 						parent        : isDefined(parentId) ? parentId: undefined,
 						type          : "Doc",
 						name          : docName,
 						attachmentName: docFileName,
-						url           : docUrl
+						url           : docUrl,
+						fileSize      : fileSize
 					});
 				});
 			};
@@ -187,7 +204,9 @@ export class WebScraping {
 			.then(downloadList => this.removeDuplicateFile(downloadList, fileDict))
 			.tap(downloadList => callbacks.onStartDownload(downloadList))
 			.map<DownloadListItem, DownloadFileItem>(item => 
-				Http.downloadFile(item.url)
+				Http.downloadFile(item.url, (progressEvent) => {
+						if(callbacks.onFileProgress) callbacks.onFileProgress(item.id, progressEvent);
+					})
 					.then(result => ({
 						id: item.id,
 						name: item.name,

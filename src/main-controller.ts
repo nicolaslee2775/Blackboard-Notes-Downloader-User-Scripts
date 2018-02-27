@@ -132,6 +132,26 @@ export class MainController {
 					this.ui.tree.getRowDOM(item.id).attr("BND-status", "downloading");
 				});
 			}),
+			onFileProgress: ((id, event) => {
+				let fileContent = contentList.find(item => item.id === id);
+				let fileSize: number = event.lengthComputable ? event.total : fileContent.fileSize;
+				if(fileSize !== undefined) {
+					let progress: number = Math.min(event.loaded / fileSize * 100, 100);
+					this.ui.tree.editData(id, "status", `Downloading... [${progress.toFixed(1)}%]`);
+				} else {
+					let getFileSizeText = (size: number, digit: number) => {
+						let shift = Math.floor(Math.log(size) / Math.log(1024));
+						switch(shift) {
+							case 0: return (size).toFixed(digit) + 'B';
+							case 1: return (size/1024).toFixed(digit) + 'KB';
+							case 2: return (size/1024/1024).toFixed(digit) + 'MB';
+							default: return (size/1024/1024/1024).toFixed(digit) + 'GB';
+						}
+					};
+					let fileSizeText = getFileSizeText(event.loaded, 2);
+					this.ui.tree.editData(id, "status", `Downloading... [${fileSizeText}]`);
+				}
+			}),
 			onFileDownloaded: (file => {
 				console.log("Downloaded!", {id: file.id, name: file.name, url: file.url});
 				
