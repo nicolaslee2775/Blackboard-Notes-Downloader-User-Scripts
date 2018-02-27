@@ -208,7 +208,7 @@ export class WebScraping {
 					var fileItem = contentMap[viewItem.id];
 
 					downloadList.push({
-						id: viewItem.id,
+						id: parseInt(viewItem.id), // viewItem.id is string
 						name: viewItem.text, 
 						path: tree.getFolderPath(fileItem.parent, contentMap), 
 						url: fileItem.url
