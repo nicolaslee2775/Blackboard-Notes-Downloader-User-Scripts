@@ -16,7 +16,7 @@ export namespace Http {
         });
 	}
 
-	export function downloadFile(url: string) {
+	export function downloadFile(url: string, onProgess?: (event: ProgressEvent) => void) {
         return new Bluebird<{ response: string, responseURL: string }>(function(resolve, reject) {
             var xhttp = new XMLHttpRequest();
             xhttp.onreadystatechange = function() {
@@ -26,7 +26,12 @@ export namespace Http {
                         responseURL: xhttp.responseURL
                     });
                 }
-            };
+			};
+			if(onProgess) {
+				xhttp.onprogress = function(e) {
+					onProgess(e);
+				};
+			}
             xhttp.responseType = "blob";
             xhttp.open("GET", url, true);
             xhttp.send();
