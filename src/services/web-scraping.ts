@@ -109,7 +109,8 @@ export class WebScraping {
 		return new Bluebird<void>((resolve, reject) => {
 			var deferredTask: Bluebird<void>[] = []; // for each folder
 
-			let getFileContent = (item: HTMLElement, id: number) => {
+			let getFileContent = (item: HTMLElement) => {
+				let id = data.counter.get();
 				let fileName = $(item).find("div.item a>span").text(),
 					fileUrl  = $(item).find("div.item a").attr("href");
 				
@@ -121,21 +122,26 @@ export class WebScraping {
 					url   : fileUrl
 				});
 			};
-			let getDocumentContent = (item: HTMLElement, id: number) => {
+			let getDocumentContent = (item: HTMLElement) => {
 				let docName     = $(item).find("div.item span+span").text(),
-					docFileName = $(item).find("div.details .attachments a").text(),
-					docUrl      = $(item).find("div.details .attachments a").attr("href");
-				
-				data.contentList.push({
-					id            : id,
-					parent        : isDefined(parentId) ? parentId: undefined,
-					type          : "Doc",
-					name          : docName,
-					attachmentName: docFileName,
-					url           : docUrl
+					docFileList = $(item).find("div.details .attachments > li");
+
+				docFileList.each((index, docFileEle) => {
+					let id = data.counter.get();
+					let docFileName  = $(docFileEle).find("a").text(),
+						docUrl       = $(docFileEle).find("a").attr("href");
+					data.contentList.push({
+						id            : id,
+						parent        : isDefined(parentId) ? parentId: undefined,
+						type          : "Doc",
+						name          : docName,
+						attachmentName: docFileName,
+						url           : docUrl
+					});
 				});
 			};
-			let getFolderContent = (item: HTMLElement, id: number) => {
+			let getFolderContent = (item: HTMLElement) => {
+				let id = data.counter.get();
 				let folderName = $(item).find("div.item a>span").text(),
 					folderUrl  = $(item).find("div.item a").attr("href");
 
@@ -162,9 +168,9 @@ export class WebScraping {
 					isDocument  = this._endsWith(iconSrc, "document_on.gif"),
 					isFolder 	= this._endsWith(iconSrc, "folder_on.gif");
 				
-				if(isFile) 			getFileContent(item, id);
-				else if(isDocument) getDocumentContent(item, id);
-				else if(isFolder) 	getFolderContent(item, id);
+				if(isFile) 			getFileContent(item);
+				else if(isDocument) getDocumentContent(item);
+				else if(isFolder) 	getFolderContent(item);
 			});
 
 			Bluebird.all(deferredTask).then(() => {
