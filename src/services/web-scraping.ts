@@ -47,6 +47,7 @@ export interface DownloadFilesCallbacks {
 	onStartDownload: (list: DownloadListItem[]) => void
 	onFileProgress?: (id: number, event: ProgressEvent) => void
 	onFileDownloaded: (file: DownloadFileItem) => void
+	onFileDownloadError: (id: number, event: Event<any> | Http.HttpError) => void
 	onAllDownloaded: (files: DownloadFileItem[]) => void
 }
 
@@ -215,6 +216,9 @@ export class WebScraping {
 						url: result.responseURL
 					}))
 					.tap(file => callbacks.onFileDownloaded(file))
+					.catch(err => {
+						callbacks.onFileDownloadError(item.id, err);
+					})
 			)
 			.then(fileList => callbacks.onAllDownloaded(fileList));
 	}

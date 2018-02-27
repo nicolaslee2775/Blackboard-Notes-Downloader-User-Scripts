@@ -162,6 +162,15 @@ export class MainController {
 				this.ui.tree.editData(file.id, "status", "Done!");
 				this.ui.tree.getRowDOM(file.id).attr("BND-status", "done");
 			}),
+			onFileDownloadError: (id, error) => {
+				if(error instanceof Http.HttpError) {
+					this.ui.tree.editData(id, "status", `Error ${error.status} - ${error.statusText}`);
+				} else {
+					this.ui.tree.editData(id, "status", "Error");
+					console.error(error);
+				}
+				this.ui.tree.getRowDOM(id).attr("BND-status", "error");
+			},
 			onAllDownloaded: (files => {
 				files.forEach(file => this.model.fileDict[file.id] = file);
 

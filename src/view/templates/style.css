@@ -25,3 +25,7 @@
 .jstree-table-cell[BND-status='done'] {
 	background: #e4f7f1 !important;
 }
+.jstree-table-col-0[BND-status='error'],
+.jstree-table-cell[BND-status='error'] {
+	background: #f9e2e2 !important;
+}
