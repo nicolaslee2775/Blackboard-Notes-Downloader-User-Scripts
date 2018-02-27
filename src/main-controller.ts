@@ -41,7 +41,7 @@ Archive and downlaod zip file
 
 interface Model {
 	contentList: FileContent[]
-	fileDict    : Map<DownloadFileItem>;
+	fileDict    : Dict<DownloadFileItem>;
 }
 
 

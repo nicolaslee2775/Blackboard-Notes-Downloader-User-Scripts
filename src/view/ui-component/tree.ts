@@ -123,7 +123,7 @@ export class Tree implements UiComponent {
 		}
 	}
 
-	getFolderPath(id: number, contentMap: Map<FileContent>): string {
+	getFolderPath(id: number, contentMap: Dict<FileContent>): string {
 		if(id === undefined) {
 			return "";
 		} else {

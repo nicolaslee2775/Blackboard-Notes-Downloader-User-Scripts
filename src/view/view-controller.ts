@@ -12,7 +12,7 @@ interface Initializable {
 }
 export interface UiComponent extends Initializable {}
 
-type UiComponentSet = Map<UiComponent>;
+type UiComponentSet = Dict<UiComponent>;
 
 
 

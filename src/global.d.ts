@@ -1,1 +1,1 @@
-type Map<T> = {[key: number]: T};
+type Dict<T> = {[key: number]: T};

@@ -54,7 +54,7 @@ interface GetFileListData {
 	updateCallback: () => void
 }
 
-export function contentListToMap(list: FileContent[]): Map<FileContent> {
+export function contentListToMap(list: FileContent[]): Dict<FileContent> {
 	//return list.sort((a, b) => a.id - b.id);
 	var map = {};
 	for(var i = 0; i < list.length; i++) map[list[i].id] = list[i];
@@ -174,7 +174,7 @@ export class WebScraping {
 		});
 	}
 
-	downloadFiles(contentList: FileContent[], tree: Tree, fileDict: Map<DownloadFileItem>, callbacks: DownloadFilesCallbacks) {
+	downloadFiles(contentList: FileContent[], tree: Tree, fileDict: Dict<DownloadFileItem>, callbacks: DownloadFilesCallbacks) {
 		let contentMap = contentListToMap(contentList);
 
 		this.prepareDownloadList(contentMap, tree)
@@ -194,7 +194,7 @@ export class WebScraping {
 			.then(fileList => callbacks.onAllDownloaded(fileList));
 	}
 
-	private prepareDownloadList(contentMap: Map<FileContent>, tree: Tree) {
+	private prepareDownloadList(contentMap: Dict<FileContent>, tree: Tree) {
 		return new Bluebird<DownloadListItem[]>((resolve, reject) => {
 			var downloadList: DownloadListItem[] = [];
 
@@ -221,7 +221,7 @@ export class WebScraping {
 		});
 	}
 
-	private removeDuplicateFile(downloadList: DownloadListItem[], fileDict: Map<DownloadFileItem>) {
+	private removeDuplicateFile(downloadList: DownloadListItem[], fileDict: Dict<DownloadFileItem>) {
 		return new Bluebird<DownloadListItem[]>((resolve, reject) => {
             var filtered = downloadList.filter(item => !fileDict[item.id]);
 			//console.log("filtered:", filtered);
