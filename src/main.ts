@@ -7,8 +7,8 @@ import { MainController } from './main-controller'
 
 
 $(document).ready(() => {
-	let mainCtrl = new MainController();
-	unsafeWindow.mainCtrl = mainCtrl;
+    let mainCtrl = new MainController();
+    unsafeWindow.mainCtrl = mainCtrl;
 
-	mainCtrl.init();
+    mainCtrl.init();
 });

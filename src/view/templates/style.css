@@ -4,10 +4,10 @@
 .jstree-table-midwrapper a.jstree-clicked:before,
 .jstree-table-midwrapper a.jstree-hovered:before,
 .jstree-default .jstree-wholerow-hovered {
-	background: none;
+    background: none;
 }
 .ui-button,.ui-widget {
-	font-size: small;
+    font-size: small;
 }
 
 
@@ -15,17 +15,17 @@
 
 .jstree-table-col-0[BND-status='idle'],
 .jstree-table-cell[BND-status='idle'] {
-	background: none;
+    background: none;
 }
 .jstree-table-col-0[BND-status='downloading'],
 .jstree-table-cell[BND-status='downloading'] {
-	background: #f9efe2 !important;
+    background: #f9efe2 !important;
 }
 .jstree-table-col-0[BND-status='done'],
 .jstree-table-cell[BND-status='done'] {
-	background: #e4f7f1 !important;
+    background: #e4f7f1 !important;
 }
 .jstree-table-col-0[BND-status='error'],
 .jstree-table-cell[BND-status='error'] {
-	background: #f9e2e2 !important;
+    background: #f9e2e2 !important;
 }

@@ -12,10 +12,10 @@ module.exports = {
     devtool: 'source-map', // if we want a source map 
     module: {
         loaders: [
-			{ 
-				test: /\.ts$/, 
-				loader: 'ts-loader' 
-			}, {
+            { 
+                test: /\.ts$/, 
+                loader: 'ts-loader' 
+            }, {
                 test: /\.html$/,
                 exclude: /node_modules/,
                 loader: "html-loader?exportAsEs6Default"
@@ -25,15 +25,15 @@ module.exports = {
                 loader: "html-loader?exportAsEs6Default"
             }
         ]
-	},
-	
-	plugins: [
-		new BrowserSyncPlugin({
-			host: 'localhost',
-			port: 3000,
-			server: { 
-				baseDir: './'
-			}
-		})
-	]
+    },
+    
+    plugins: [
+        new BrowserSyncPlugin({
+            host: 'localhost',
+            port: 3000,
+            server: { 
+                baseDir: './'
+            }
+        })
+    ]
 };

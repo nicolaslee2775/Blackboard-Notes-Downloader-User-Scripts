@@ -25,10 +25,10 @@ module.exports = {
     },
     module: {
         loaders: [
-			{ 
-				test: /\.ts$/, 
-				loader: 'ts-loader' 
-			}, {
+            { 
+                test: /\.ts$/, 
+                loader: 'ts-loader' 
+            }, {
                 test: /\.html$/,
                 exclude: /node_modules/,
                 loader: "html-loader?exportAsEs6Default"
@@ -38,13 +38,13 @@ module.exports = {
                 loader: "html-loader?exportAsEs6Default"
             }
         ]
-	},
+    },
 
-	plugins: [
-		//new webpack.optimize.UglifyJsPlugin({ comments: false }),
-		new webpack.BannerPlugin({
-			banner: header,
-			raw: true
-		})
-	]
+    plugins: [
+        //new webpack.optimize.UglifyJsPlugin({ comments: false }),
+        new webpack.BannerPlugin({
+            banner: header,
+            raw: true
+        })
+    ]
 };
