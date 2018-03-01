@@ -1,15 +1,28 @@
-var BrowserSyncPlugin = require('browser-sync-webpack-plugin');
+var webpack = require('webpack');
+
+
+var version = '1.4';
+var header = 
+`// ==UserScript==
+// @name         Blackboard Notes Downloader
+// @namespace    nico
+// @version      ${version}
+// @description  Download notes
+// @author       Nicolas
+// @match        https://learn.polyu.edu.hk/webapps/blackboard/execute/modulepage/view?course_id=*
+// ==/UserScript==
+`;
+
 
 module.exports = {
     entry: './src/main.ts',
     output: {
         path: __dirname + '/build',
-        filename: 'bundle.js'
+        filename: 'blackboard-notes-downloader.plugin.js'
     },
     resolve: {
         extensions: ['.js', '.ts', '.ts']
     },
-    devtool: 'source-map', // if we want a source map 
     module: {
         loaders: [
 			{ 
@@ -26,14 +39,12 @@ module.exports = {
             }
         ]
 	},
-	
+
 	plugins: [
-		new BrowserSyncPlugin({
-			host: 'localhost',
-			port: 3000,
-			server: { 
-				baseDir: './'
-			}
+		//new webpack.optimize.UglifyJsPlugin({ comments: false }),
+		new webpack.BannerPlugin({
+			banner: header,
+			raw: true
 		})
 	]
 };

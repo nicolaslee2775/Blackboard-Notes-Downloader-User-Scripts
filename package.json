@@ -2,10 +2,10 @@
   "name": "blackboard-notes-downloader",
   "version": "1.0.0",
   "description": "",
-  "main": "build/index.js",
+  "main": "dict/bundle.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc -p . ; webpack build/main.js build/bundle.js"
+    "dev": "webpack --config webpack.config.dev.js --watch",
+    "build": "webpack --config webpack.config.build.js"
   },
   "author": "",
   "license": "ISC",
@@ -27,6 +27,7 @@
     "browser-sync": "^2.18.13",
     "browser-sync-webpack-plugin": "^1.2.0",
     "html-loader": "^0.5.1",
-    "ts-loader": "^2.3.3"
+    "ts-loader": "^2.3.3",
+    "webpack": "^3.5.5"
   }
 }
